@@ -2,7 +2,7 @@
 
 ## What are EGTBs?
 
-(Endgame Tablebase)[https://en.wikipedia.org/wiki/Endgame_tablebase], or EGTB is a precomputed table of game result evaluations for each legal position that consists of certain pieces. Game analysis engine can query this database instead of evaluating the position which greatly speeds up not only the analysis of positions that are present in EGTB but also the analysis of possible conversions from more complex positions to EGTB positions.
+[Endgame Tablebase](https://en.wikipedia.org/wiki/Endgame_tablebase), or EGTB is a precomputed table of game result evaluations for each legal position that consists of certain pieces. Game analysis engine can query this database instead of evaluating the position which greatly speeds up not only the analysis of positions that are present in EGTB but also the analysis of possible conversions from more complex positions to EGTB positions.
 
 Two types of chess EGTBs exist that are available publicly:
 
