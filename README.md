@@ -4,7 +4,7 @@ Analyse Lichess game database to prioritise Syzygy EGTBs downloads.
 ## How it was done
 
 - [Analysing 2 billion chess games to determine 7-man Syzygy EGTBs priority](./analysing-lichess-game-database.md) – article about this foray
-- [egtb.py]()
+- `egtb.py`
     * Machine: cloud instance with 8 dedicated AMD EPYC 7003 Cores + 600 GB of network storage, Python 3.8.5
     * Time: 3d 8h 46m. I didn't bother with speed too much. Also, what network storage bottlenecks?
     * Cost: <10€. Yay for cloud computing!
