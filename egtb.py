@@ -1,11 +1,13 @@
 import bz2
 import io
 import json
+import logging
 import multiprocessing as mp
-import re
 import sys
 from argparse import ArgumentParser
 from collections import Counter, defaultdict
+from datetime import datetime as dt
+from itertools import count
 from pathlib import Path
 from typing import (
     Callable,
@@ -20,14 +22,12 @@ from typing import (
 
 import chess.pgn
 
+logging.getLogger("chess.pgn").setLevel(logging.CRITICAL)
+
 # ---- Constants and shared values ----
 # Number of captures to reach 7-man position
 # = 32 (starting pieces) - 7 (end pieces) == 25
 REQUIRED_CAPTURES_7_MAN = 25
-
-# Regexes to clean SAN
-RE_REMOVE_CURLY = re.compile(r'\{.*?\}')
-RE_REMOVE_PARENS = re.compile(r'\(.*?\}')
 
 # Piece order for EGTB names
 EGTB_PIECE_ORDER = {
@@ -64,14 +64,19 @@ def next_pgn(fiter: Iterator) -> List[str]:
         # that was already consumed by `next(fiter)`;
         # Next line in PGN contains game log in SAN
         # (Standard/Short Algebraic Notation)
-        pgn.append(next(fiter).strip())
 
-        # Skip the next empty line between SAN and next PGN header
-        try:
-            next(fiter)
-        except StopIteration:
-            # EOF
-            pass
+        # For PGNs that have SAN separated over several lines
+        # (Caissa, Mega), run an inside loop that collects this SAN log
+        san = ''
+        while True:
+            line = next(fiter).strip()
+            if not line:
+                # Consumed a line between SAN and next PGN header;
+                # can return complete PGN
+                break
+            san += line + ' '
+
+        pgn.append(san.strip())
 
         return pgn
 
@@ -160,8 +165,12 @@ def get_time_control(pgn: List[str]) -> str:
 
     # Time control format: <starting_time>+<increment>
     # Example: 60+0 (1-minute bullet)
-    start, increment = tc.split('+')
-    start = int(start)
+    try:
+        start, increment = tc.split('+')
+        start = int(start)
+    except ValueError:
+        # Too lazy to parse different Mega timecontrol formats :)
+        return 'slow'
     if start <= 60:
         # 1 minute or less
         return 'bullet'
@@ -204,11 +213,13 @@ def parse_compressed_pgn(
     else:
         raise RuntimeError(f'Unsupported extension: {suffix}')
 
+    game_counter = count(1)
     # Process file
-    with openfunc(filepath, mode) as f:
+    with openfunc(filepath, mode, encoding='latin-1') as f:
         while True:
             try:
                 pgn = next_pgn(f)
+                sys.stdout.write(f'Processed game #{next(game_counter):,}\r')
             except StopIteration:
                 # EOF
                 break
@@ -237,51 +248,6 @@ def parse_compressed_pgn(
 # ---- End of: DB files parsing routines ----
 
 # ---- Game analysis routines ----
-def cleanup_san(san: str) -> str:
-    """
-    Cleanup SAN log, returning only mainline without any additional info.
-
-    :param san: SAN string to cleanup
-    """
-    # SAN log may contain other info in addition to a mainline
-    # This info may include:
-    # - line variations in parens; added by an annotator or computer analysis
-    # - computer evaluation, clock info or comments in curly braces
-    # Curly braces can contain variations as well; remove curly first
-    # with a non-greedy regex substitution
-    nocurly = re.sub(RE_REMOVE_CURLY, '', san)
-
-    # Now, only line variations are left
-    return re.sub(RE_REMOVE_PARENS, '', nocurly)
-
-
-def san_with_required_no_of_captures(
-    pgn: List[str], captures: int
-) -> Optional[str]:
-    """
-    Check whether position with a certain number of pieces left
-    has been reached in a 1-game PGN.
-    For this, calculate number of captures made in the game
-    after cleaning SAN from variations and various comments.
-    Return cleaned up SAN to analyse
-
-    :param pgn: list with parsed PGN
-    :param captures: number of captures to reach
-    """
-    san = cleanup_san(pgn[-1])
-    no_of_captures = 0
-
-    # SAN can be analysed for captures without using move generator
-    # by analyzing the number of capture symbols (`x`)
-    for symbol in san:
-        if symbol == 'x':
-            no_of_captures += 1
-        if no_of_captures == captures:
-            return san
-    else:
-        return None
-
-
 def egtb_name_from_pieces(pieces: Tuple[str]) -> str:
     """
     Construct EGTB name from the pieces configuration.
@@ -308,17 +274,18 @@ def egtb_name_from_pieces(pieces: Tuple[str]) -> str:
         return f'{black}v{white}'
 
 
-def play_game(san: str, captures: int) -> Optional[str]:
+def play_game(pgn: str, captures: int) -> Optional[str]:
     """
-    Process SAN with a move generator to reach needed position.
+    Process PGN with a move generator to reach needed position.
     Determine EGTB to use based on the pieces left.
 
-    :param san: SAN line to analyse
+    :param pgn: PGN to analyze
     :param captures: number of captures to reach
     """
     # python-chess primary interface loads SAN from a PGN file.
     # Wrap SAN string into StringIO for compatibility with that interface
-    game = chess.pgn.read_game(io.StringIO(san))
+    pgn = '\n'.join(pgn)
+    game = chess.pgn.read_game(io.StringIO(pgn))
     board = game.board()
 
     # To reach a position, `captures` number of half-moves has to be made.
@@ -329,11 +296,24 @@ def play_game(san: str, captures: int) -> Optional[str]:
     # Play mainline for this amount of half-moves before starting analysis.
     mainline = iter(game.mainline_moves())
     for _ in range(captures + 2):
-        board.push(next(mainline))
+        try:
+            board.push(next(mainline))
+        except StopIteration:
+            # Game shorter than required number of moves to reach 7-piece
+            return None
 
     # From this point, monitor the number of pieces on the board
     while len(board.piece_map()) != 32 - captures:
-        board.push(next(mainline))
+        try:
+            board.push(next(mainline))
+        except StopIteration:
+            # 7-piece never reached
+            return None
+
+    if game.errors:
+        # python-chess supresses errors but collects them;
+        # if game is invalid, exclude it from analysis
+        return None
 
     # Save current piece composition and make another half-move.
     # If the next half-move reduces the number of pieces on the board,
@@ -378,14 +358,10 @@ def analyse_game(
             # End of input queue
             break
         pgn, tc = pair
-        san = san_with_required_no_of_captures(pgn, captures)
-        if san is None:
-            # Get next game to analyse
-            continue
 
         # Pass the SAN to move generator to determine EGTB name
         # for the position after `captures` number of captures
-        egtb = play_game(san, captures)
+        egtb = play_game(pgn, captures)
         if egtb is None:
             # EGTB was trivialised or unsuitable.
             # Get next game to analyse.
@@ -507,13 +483,16 @@ def collect_cumulative_results(path: Path, sort_by_material_diff: bool):
     total_games = sum(timecontrols.values())
 
     cumulative = {
+        'created': dt.isoformat(dt.now()),
         'total_games': total_games,
         'timecontrol': timecontrols,
-        'EGTB_most_games': dict(Counter(egtbs).most_common()),
     }
     if sort_by_material_diff:
+        # Appending this to the dict first in case it exists
         egtb_alt = material_diff_sort(egtbs)
         cumulative['EGTB_material_diff'] = egtb_alt
+
+    cumulative['EGTB_most_games'] = dict(Counter(egtbs).most_common())
 
     with open(outfolder.joinpath('cumulative-stats.json'), 'w') as f:
         json.dump(cumulative, f)
