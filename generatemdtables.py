@@ -1,4 +1,5 @@
 import json
+from argparse import ArgumentParser
 from pathlib import Path
 
 LINK_ROOT = 'https://tablebase.lichess.ovh/tables/standard/7'
@@ -19,7 +20,7 @@ def folder_from_egtb_name(name: str) -> str:
 
 def generate_table(
     key: str, statsfile: Path, linksfolder: Path, threshold: float
-):
+) -> list:
     """
     Generate Markdown tables with download links
     from a JSON file with stats.
@@ -37,7 +38,7 @@ def generate_table(
 
     egtb_orig = data[key]
     tablerows = [
-        '|#|Name|No. of games|Percentage|WDL|WDL (cumulative)|Download (WDL, cumulative)|WDL+DTZ|WDL+DTZ (cumulative)|Download (WDL + DTZ, cumulative)|',
+        '|#|Name|No. of games|Percentage|WDL|WDL (cumulative)|Download|WDL+DTZ|WDL+DTZ (cumulative)|Download|',
         '|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|',
     ]
     links_wdl = []
@@ -83,25 +84,52 @@ def generate_table(
             f'|{percentage:.2f}%'
             f'|{wdl_size / GIGABYTE:.2f} GB'
             f'|{cumulative_wdl / GIGABYTE:.2f} GB'
-            f'|[List](./download_lists/{wdl_path})'
+            f'|[List]({wdl_store_as})'
             f'|{(wdl_size + dtz_size) / GIGABYTE:.2f} GB'
             f'|{cumulative_wdl_dtz / GIGABYTE:.2f} GB'
-            f'|[List](./download_lists/{wdl_dtz_path})'
+            f'|[List]({wdl_dtz_store_as})'
         )
 
-    for r in tablerows:
-        print(r)
+    return tablerows
+
+
+def generate_md_file(db: str):
+    """
+    Generate final Markdown file with tables.
+
+    :param db: name of the database
+    """
+    statsfile = Path(f'./json_stats/{db}.json')
+    linksfolder = Path(f'./download_lists/{db}')
+    mdfile = Path(f'./markdown_tables/{db}.md')
+
+    material_diff = generate_table(
+        'EGTB_material_diff', statsfile, linksfolder, 0.0995
+    )
+    most_games = generate_table(
+        'EGTB_most_games', statsfile, linksfolder, 0.995
+    )
+
+    with open(mdfile, 'w') as f:
+        f.write(f'# {db.capitalize()}\n\n')
+
+        f.write('**Least material imbalance**\n')
+        for line in material_diff:
+            f.write(line + '\n')
+
+        f.write('<br />\n')
+
+        f.write('\n**Most games**\n')
+        for line in most_games:
+            f.write(line + '\n')
 
 
 def main():
-    statsfile = Path('../json_stats/cumulative-stats-latest.json')
-    linksfolder = Path('../download_lists')
+    ap = ArgumentParser()
+    ap.add_argument('db', choices=('caissa', 'mega', 'lichess'))
+    args = ap.parse_args()
 
-    print('**Least material imbalance**\n')
-    generate_table('EGTB_material_diff', statsfile, linksfolder, 0.0995)
-
-    print('**Most games**\n')
-    generate_table('EGTB_most_games', statsfile, linksfolder, 0.995)
+    generate_md_file(args.db)
 
 
 if __name__ == '__main__':
