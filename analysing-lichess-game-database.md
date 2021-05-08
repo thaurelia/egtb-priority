@@ -69,6 +69,8 @@ Next step was finding games that reached 7-piece positions. At this point, I deb
 
 To reach 7-piece position, `32-7=25` captures are required and capture symbol, `x`, is unique in SAN log. The only thing that needed to be done is to clean SAN from various comments in curly braces (annotations, `eval` and `clk` info etc.) as well as variations in parens, leaving only the mainline. I haven't confirmed that variations outside comments actually exist in the Lichess DB but I did run another `re.sub` just in case. Defensive programming and all that; also, move generator parses the PGN in the similar fashion (went on a hunch here but confirmed later) so capture counting should be at least not slower than using move generator.
 
+**UPD:** *This approach will work for Lichess DB because Lichess games do not include variations inside variations (unlike e.g. Mega). Regardless, due to a bug in initial parser, Lichess DB was re-analysed with full move generation instead of capture counting; Mega and Caissa was analysed in the same fashion.*
+
 The first version of this algo used the part of mainline up to an including the 25th capture as an input to move generator and it produced an interesting result on the limited dataset (~11 GB compressed) I used for tests and benchmarks, namely, KRPPvKPP EGTB coming up as the third most common. Ruminating on this, I came onto several possible cases:
 
 - one side hanging a piece (an argument can be made about starting at 2400 ELO but I object. 2000s are decent people!)
@@ -106,3 +108,5 @@ For me it was mostly about how many games reached 7-piece endgames and gather st
 Took a long time with a cloud instance for reasons unknown. I was away from the internet that'd allow me to grab half a TB of files quickly so I went with the fastest and cheapest solution in terms of price and performance.
 
 Results can be found [here](./README.md#TLDR). I plan to update them with each new monthly database and maybe introduce additional tables for 2400+, as well as Mega 2021 and Caissa databases.
+
+**UPD:** *Mega and Caissa added. Also added table with Top-10 EGTBs for each game database.*
