@@ -84,10 +84,10 @@ def generate_table(
             f'|{percentage:.2f}%'
             f'|{wdl_size / GIGABYTE:.2f} GB'
             f'|{cumulative_wdl / GIGABYTE:.2f} GB'
-            f'|[List]({wdl_store_as})'
+            f'|[List](../{wdl_store_as})'
             f'|{(wdl_size + dtz_size) / GIGABYTE:.2f} GB'
             f'|{cumulative_wdl_dtz / GIGABYTE:.2f} GB'
-            f'|[List]({wdl_dtz_store_as})'
+            f'|[List](../{wdl_dtz_store_as})'
         )
 
     return tablerows
