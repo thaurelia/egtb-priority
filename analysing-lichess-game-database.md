@@ -37,7 +37,7 @@ DTZ means “distance to zero (ply count)”. This number tells engine how many 
 
 One can say WDL is used to determine *which* positions to play and DTZ – *how* to play those positions. Not exactly what happens but close; also, it's possible to play with WDL EGTBs only, using them to analyse more complex positions for conversion options and later use engine to play the simplified positions. A lot of those positions aren't complex enough to require DTZ info to be played perfectly.
 
-A-a-anyway, after downloading the full 6-piece Syzygy EGTBS I went online to search for opinions and previous analyses for 7-piece Syzygy.
+A-a-anyway, after downloading the full 6-piece Syzygy EGTBs I went online to search for opinions and previous analyses for 7-piece Syzygy.
 
 Chess forums were more or less the same with KRPPvKRP, KPPPvKPP and KBPPvKBP being the top 3 suggestions which is understandable: rook and pawn and pure pawn endgames are the most common, and bishops being valued more than knights is nothing new.
 
@@ -63,6 +63,8 @@ PGN files are simple enough and consist of header with lines in square brackets,
 
 The first thing I implemented was ELO filter since who wants to analyse 6v1 positions (“five bishops vat else?”). The games that were missing ELO were treated as not falling into the ELO range. For ELO thresholds, I chose 2000 low (since first Lichess games didn't have too many players over 2000) and 4000 high (just to be sure).
 
+**UPD:** *Lower ELO bound was pushed to 2400 in the latest full re-analysis.*
+
 Next, abandoned games. Abandoned games are games where less than 2 moves had been made (the moves where time control doesn't start yet) so there's no point in trying to analyse those. Lichess data was kind enough to provide `[Termination]` tag which allowed filtering out such games before they appear in the input queue.
 
 Next step was finding games that reached 7-piece positions. At this point, I debated whether to go for 8-9 piece positions instead and try to figure out the captures that transformed them into “true” 7-piece but I gave up that idea in the end as being too complex and error-prone. To find 7-piece positions, I also forwent feeding every game into a move generator; instead, I implemented the idea we had with my coffee partner during the brainstorm — counting captures.
@@ -73,7 +75,7 @@ To reach 7-piece position, `32-7=25` captures are required and capture symbol, `
 
 The first version of this algo used the part of mainline up to an including the 25th capture as an input to move generator and it produced an interesting result on the limited dataset (~11 GB compressed) I used for tests and benchmarks, namely, KRPPvKPP EGTB coming up as the third most common. Ruminating on this, I came onto several possible cases:
 
-- one side hanging a piece (an argument can be made about starting at 2400 ELO but I object. 2000s are decent people!)
+- one side hanging a piece
 - giving up a piece for passed pawn in pawnful endgame
 - **position being in the middle of a piece trade**
 - somewhat legit position
