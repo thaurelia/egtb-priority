@@ -1,0 +1,16 @@
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KRPPvKRP.rtbw
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KRPPvKRP.rtbz
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KPPPvKPP.rtbw
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KPPPvKPP.rtbz
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KBPPvKBP.rtbw
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KBPPvKBP.rtbz
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KBPPvKPP.rtbw
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KBPPvKPP.rtbz
+https://tablebase.lichess.ovh/tables/standard/7/5v2_pawnful/KRPPPvKR.rtbw
+https://tablebase.lichess.ovh/tables/standard/7/5v2_pawnful/KRPPPvKR.rtbz
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KRPPvKPP.rtbw
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KRPPvKPP.rtbz
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KNPPvKPP.rtbw
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KNPPvKPP.rtbz
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KNPPvKNP.rtbw
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KNPPvKNP.rtbz

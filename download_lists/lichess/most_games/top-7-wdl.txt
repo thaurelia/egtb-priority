@@ -1,0 +1,7 @@
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KRPPvKRP.rtbw
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KPPPvKPP.rtbw
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KBPPvKBP.rtbw
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KBPPvKPP.rtbw
+https://tablebase.lichess.ovh/tables/standard/7/5v2_pawnful/KRPPPvKR.rtbw
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KRPPvKPP.rtbw
+https://tablebase.lichess.ovh/tables/standard/7/4v3_pawnful/KNPPvKPP.rtbw
